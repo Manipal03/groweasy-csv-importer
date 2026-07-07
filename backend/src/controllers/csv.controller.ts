@@ -1,3 +1,4 @@
+import { testGroqConnection } from "../services/aiExtractor.service";
 import { Request, Response } from "express";
 import { parseCSV } from "../services/csvParser.service";
 
@@ -30,6 +31,24 @@ export const uploadCSV = (req: Request, res: Response): void => {
     res.status(500).json({
       success: false,
       message: "Failed to parse CSV."
+    });
+  }
+};
+
+export const testAI = async (_req: Request, res: Response) => {
+  try {
+    const result = await testGroqConnection();
+
+    res.status(200).json({
+      success: true,
+      result,
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Groq connection failed.",
     });
   }
 };

@@ -4,6 +4,9 @@ import dotenv from "dotenv";
 import csvRoutes from "./routes/csv.routes";
 
 dotenv.config();
+console.log("Groq Key Loaded:", !!process.env.GROQ_API_KEY);
+console.log("Model:", process.env.MODEL);
+
 
 const app = express();
 const PORT = process.env.PORT || 5000;

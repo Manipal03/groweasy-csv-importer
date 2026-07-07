@@ -1,6 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
-import { uploadCSV } from "../controllers/csv.controller";
+
+import { uploadCSV, testAI } from "../controllers/csv.controller";
 
 const router = Router();
 
@@ -25,10 +26,8 @@ const upload = multer({
   },
 });
 
-router.post(
-  "/upload",
-  upload.single("file"),
-  uploadCSV
-);
+router.post("/upload", upload.single("file"), uploadCSV);
+
+router.get("/test-ai", testAI);
 
 export default router;
