@@ -1,7 +1,11 @@
 import { Router } from "express";
 import multer from "multer";
 
-import { uploadCSV, testAI } from "../controllers/csv.controller";
+import {
+  uploadCSV,
+  testAI,
+  importCSV,
+} from "../controllers/csv.controller";
 
 const router = Router();
 
@@ -9,9 +13,11 @@ const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
+
   limits: {
     fileSize: 5 * 1024 * 1024,
   },
+
   fileFilter: (_req, file, cb) => {
     console.log("📄 File:", file.originalname);
 
@@ -26,8 +32,30 @@ const upload = multer({
   },
 });
 
-router.post("/upload", upload.single("file"), uploadCSV);
+/**
+ * Preview CSV
+ */
+router.post(
+  "/upload",
+  upload.single("file"),
+  uploadCSV
+);
 
-router.get("/test-ai", testAI);
+/**
+ * Temporary AI Test
+ */
+router.get(
+  "/test-ai",
+  testAI
+);
+
+/**
+ * AI Import
+ */
+router.post(
+  "/import",
+  upload.single("file"),
+  importCSV
+);
 
 export default router;
