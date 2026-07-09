@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+
 import { parseCSV } from "../services/csvParser.service";
 
 import {
@@ -6,92 +7,120 @@ import {
   extractCRMRecords,
 } from "../services/aiExtractor.service";
 
-/**
- * Preview uploaded CSV
- */
+import {
+  validateRecords,
+} from "../services/validation.service";
+
+import {logInfo, logSuccess, logError} from "../utils/logger";
+
 export const uploadCSV = (req: Request, res: Response): void => {
-  console.log("================================");
-  console.log("✅ uploadCSV Controller Reached");
-  console.log("================================");
 
   if (!req.file) {
+    logInfo('CSV Import Started')
     res.status(400).json({
       success: false,
-      message: "No CSV file uploaded.",
+      message: "No CSV uploaded.",
     });
     return;
   }
 
-  try {
-    const rows = parseCSV(req.file.buffer);
+  const rows = parseCSV(req.file.buffer);
+  logInfo(`Parsed ${rows.length} rows`);
 
-    res.status(200).json({
-      success: true,
-      totalRows: rows.length,
-      preview: rows,
-    });
-  } catch (err) {
-    console.error(err);
+  res.json({
+    success: true,
+    totalRows: rows.length,
+    preview: rows,
+  });
 
-    res.status(500).json({
-      success: false,
-      message: "Failed to parse CSV.",
-    });
-  }
 };
 
-/**
- * Temporary Groq Connection Test
- */
 export const testAI = async (_req: Request, res: Response) => {
+
   try {
+
     const result = await testGroqConnection();
 
-    res.status(200).json({
+    res.json({
       success: true,
       result,
     });
-  } catch (error) {
-    console.error(error);
+
+  } catch {
 
     res.status(500).json({
       success: false,
-      message: "Groq connection failed.",
     });
+
   }
+
 };
 
-/**
- * AI CSV Import
- */
 export const importCSV = async (
   req: Request,
   res: Response
 ) => {
+
   if (!req.file) {
+
     return res.status(400).json({
+
       success: false,
+
       message: "No CSV uploaded.",
+
     });
+
   }
 
   try {
+
     const rows = parseCSV(req.file.buffer);
 
-    const crmRecords = await extractCRMRecords(rows);
+    const aiResult =
+      await extractCRMRecords(rows);
+      logSuccess("AI Extraction complete");
 
-    return res.status(200).json({
+    const validation =
+      validateRecords(aiResult.records);
+      logSuccess("Validation complete");
+
+    return res.json({
+
       success: true,
+
       totalRows: rows.length,
-      crmRecords,
+
+      processedRecords:
+        validation.validRecords.length,
+
+      invalidRecords:
+        validation.invalidRecords.length,
+
+      duplicateRecords:
+        validation.duplicateRecords.length,
+
+      failedBatches:
+        aiResult.failedBatches,
+
+      crmRecords:
+        validation.validRecords,
+
     });
 
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+
+    logError("Error occurred while importing CSV.");
+    console.error(err);
 
     return res.status(500).json({
+
       success: false,
+
       message: "Import failed.",
+
     });
+
   }
+
 };

@@ -3,6 +3,7 @@ import Groq from "groq-sdk";
 import { crmRecordSchema, CRMRecord } from "../schemas/crmRecord.schema";
 import { retry } from "../utils/retry";
 import { batchArray } from "../utils/batching";
+import { recoverJSON } from "../utils/jsonRecovery";
 
 /**
  * Create Groq client
@@ -62,16 +63,17 @@ export async function extractCRMRecords(
   for (let i = 0; i < batches.length; i++) {
     const batch = batches[i];
 
-    const prompt = `
-You are an expert CRM data extraction assistant.
+    const prompt =`You are an expert CRM data normalization engine.
 
-Your task is to normalize CSV rows into CRM records.
+Your ONLY task is to convert CSV rows into CRM records.
 
 Return ONLY valid JSON.
 
-The response MUST be a JSON array.
+Never explain.
 
-Each object MUST contain EXACTLY these keys:
+Never use markdown.
+
+Every object MUST contain exactly these fields:
 
 [
   {
@@ -85,14 +87,24 @@ Each object MUST contain EXACTLY these keys:
 
 Rules:
 
-- Use lowercase keys only.
-- Never use Name, Email or Phone.
-- Missing values should be empty strings.
-- Never explain.
-- Never use markdown.
-- Never include extra keys.
+• Convert Name, Full Name, Customer Name → name
 
-CSV:
+• Convert Email, Email Address, Mail → email
+
+• Convert Phone, Mobile, Contact Number → phone
+
+• Convert Company, Organization, Employer → company
+
+• Everything else goes into notes.
+
+• Missing values become "".
+
+Never invent data.
+
+Return ONLY JSON.
+`;
+const userPrompt=`
+CSV Data:
 
 ${JSON.stringify(batch)}
 `;
@@ -104,9 +116,13 @@ ${JSON.stringify(batch)}
 
           messages: [
             {
-              role: "user",
+              role: "system",
               content: prompt,
             },
+            {
+              role: "user",
+              content: userPrompt,
+            }
           ],
 
           temperature: 0,
@@ -126,7 +142,8 @@ ${JSON.stringify(batch)}
       let parsed: unknown;
 
       try {
-        parsed = JSON.parse(content);
+        const cleanJSON = recoverJSON(content);
+        parsed = JSON.parse(cleanJSON);
       } catch {
         failedBatches.push({
           batchNumber: i + 1,

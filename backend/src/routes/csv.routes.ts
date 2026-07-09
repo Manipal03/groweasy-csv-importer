@@ -7,6 +7,9 @@ import {
   importCSV,
 } from "../controllers/csv.controller";
 
+import { importLimiter } from "../middleware/rateLimiter";
+
+
 const router = Router();
 
 const storage = multer.memoryStorage();
@@ -52,6 +55,12 @@ router.get(
 /**
  * AI Import
  */
+router.post(
+  "/import",
+  importLimiter,
+  upload.single("file"),
+  importCSV
+);
 router.post(
   "/import",
   upload.single("file"),
