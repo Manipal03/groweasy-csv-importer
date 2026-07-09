@@ -22,7 +22,7 @@ const upload = multer({
   },
 
   fileFilter: (_req, file, cb) => {
-    console.log("📄 File:", file.originalname);
+    console.log(" File:", file.originalname);
 
     if (
       file.mimetype === "text/csv" ||
@@ -61,10 +61,6 @@ router.post(
   upload.single("file"),
   importCSV
 );
-router.post(
-  "/import",
-  upload.single("file"),
-  importCSV
-);
+
 
 export default router;
