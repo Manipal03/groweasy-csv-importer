@@ -3,6 +3,7 @@ import { parseCSV } from "../services/csvParser.service";
 
 import {
   testGroqConnection,
+  extractCRMRecords,
 } from "../services/aiExtractor.service";
 
 /**
@@ -94,23 +95,3 @@ export const importCSV = async (
     });
   }
 };
-
-function extractCRMRecords(rows: unknown[]): unknown[] {
-  return rows.map((row, index) => {
-    if (row && typeof row === "object" && !Array.isArray(row)) {
-      const record = row as Record<string, unknown>;
-      const crmRecord: Record<string, unknown> = { ...record };
-
-      if (!crmRecord.id) {
-        crmRecord.id = `crm-${index + 1}`;
-      }
-
-      return crmRecord;
-    }
-
-    return {
-      id: `crm-${index + 1}`,
-      rawRow: row,
-    };
-  });
-}

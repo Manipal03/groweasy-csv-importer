@@ -1,21 +1,18 @@
 import Papa from "papaparse";
 
-export const parseCSV = (buffer: Buffer) => {
-  console.log("CSV parser started...");
+export const parseCSV = (
+  buffer: Buffer
+): Record<string, string>[] => {
 
   const csv = buffer.toString("utf-8");
 
-  console.log(csv);
-
-  const result = Papa.parse(csv, {
+  const result = Papa.parse<Record<string, string>>(csv, {
     header: true,
     skipEmptyLines: true,
   });
 
-  console.log(result);
-
   if (result.errors.length > 0) {
-    throw new Error("Invalid CSV file.");
+    throw new Error("Invalid CSV.");
   }
 
   return result.data;
